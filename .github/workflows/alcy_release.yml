@@ -6,18 +6,7 @@ permissions:
 on:
   push:
     tags:
-      - 'v*'
-    branches: ["alcy/*"]
-  workflow_dispatch:
-    inputs:
-      tag_name:
-        description: "Tag to upload"
-        required: true
-        default: 'v0.0.1'
-      overwrite:
-        description: "Overwrite existing files"
-        type: boolean
-        default: true
+      - 'alcy_v*'
 
 jobs:
   build:
@@ -71,9 +60,9 @@ jobs:
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          tag_name: ${{ github.ref_name }}
           files: llvm-${{ matrix.triple }}.tar.gz
           append_body: true
-          overwrite: ${{ github.event.inputs.overwrite || 'true' }}
+          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
