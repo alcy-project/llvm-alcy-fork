@@ -62,7 +62,8 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           files: llvm-${{ matrix.triple }}.tar.gz
+          draft: true
           append_body: true
-          overwrite: true
+          overwrite_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
