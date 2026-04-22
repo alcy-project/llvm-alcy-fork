@@ -35,13 +35,11 @@ jobs:
       - name: Install Ninja
         uses: llvm/actions/install-ninja@main
 
-      - name: Cache CMake Build
-        uses: actions/cache@v4
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
         with:
-          path: build
-          key: ${{ runner.os }}-llvm-cmake-${{ hashFiles('**/CMakeLists.txt', '**/CMakeCache.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-llvm-cmake-
+          key: ${{ matrix.os }}-llvm-ccache
+          max-size: 2G
 
       - name: Configure CMake
         shell: bash
@@ -49,6 +47,8 @@ jobs:
           cmake -S llvm -B build -G Ninja \
             -DCMAKE_INSTALL_PREFIX=./install \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DLLVM_TARGETS_TO_BUILD=all \
             -DBUILD_SHARED_LIBS=OFF \
             -DLLVM_BUILD_32_BITS=OFF \
@@ -147,7 +147,9 @@ jobs:
 
       - name: Build and Install
         run: |
+          ccache -z
           cmake --build build --target install
+          ccache -s
 
       - name: Archive Binaries
         shell: bash
