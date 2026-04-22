@@ -137,7 +137,7 @@ jobs:
             -DLLVM_USE_SYMLINKS=ON \
             -DLLVM_VERSION_PRINTER_SHOW_BUILD_CONFIG=ON \
             -DLLVM_VERSION_PRINTER_SHOW_HOST_TARGET_INFO=ON \
-            -DLLVM_WINDOWS_PREFER_FORWARD_SLASH=OFF"
+            -DLLVM_WINDOWS_PREFER_FORWARD_SLASH=OFF
 
       - name: Build and Install
         run: |
