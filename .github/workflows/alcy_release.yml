@@ -144,13 +144,18 @@ jobs:
       - name: Archive Binaries
         shell: bash
         run: |
-          tar -czf "llvm-${{ matrix.triple }}.tar.gz" -C ./install .
+          basename="llvm-${{ matrix.triple }}-${{ github.sha }}"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            7z a $basename.zip ./install
+          else
+            tar -czf $basename.tar.gz ./install
+          fi
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          files: llvm-${{ matrix.triple }}.tar.gz
+          files: "llvm-${{ matrix.triple }}-${{ github.sha }}.*"
           draft: true
           append_body: true
           overwrite_files: true
