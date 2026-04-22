@@ -154,7 +154,7 @@ jobs:
       - name: Archive Binaries
         shell: bash
         run: |
-          basename="llvm-${{ matrix.triple }}-${{ github.sha }}"
+          basename="llvm-${{ matrix.triple }}"
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             7z a $basename.zip ./install
           else
@@ -165,7 +165,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          files: "llvm-${{ matrix.triple }}-${{ github.sha }}.*"
+          files: "llvm-${{ matrix.triple }}.*"
           draft: true
           append_body: true
           overwrite_files: true
