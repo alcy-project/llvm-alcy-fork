@@ -1,0 +1,6 @@
+/build/
+/install/
+
+/*.tar.gz
+/*.zip
+/*.7z
