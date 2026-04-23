@@ -8,8 +8,8 @@ build_type=${3:-"Release"}
 generator=${4:-"Ninja"}
 compiler_launcher=${5:-""}
 
-# mkdir -p $build_dir
-# mkdir -p $install_dir
+mkdir -p $build_dir
+mkdir -p $install_dir
 
 cmake -S llvm -B $build_dir -G $generator \
   -DCMAKE_INSTALL_PREFIX=$install \
