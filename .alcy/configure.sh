@@ -7,15 +7,37 @@ install_dir=${2:-"$script_dir/install"}
 build_type=${3:-"Release"}
 generator=${4:-"Ninja"}
 compiler_launcher=${5:-""}
+cc_compiler=${6:-""}
+cxx_compiler=${7:-""}
+
+shift_count=$(( $# < 7 ? $# : 7 ))
+shift $shift_count
 
 mkdir -p $build_dir
 mkdir -p $install_dir
 
-cmake -S llvm -B $build_dir -G $generator \
-  -DCMAKE_INSTALL_PREFIX=$install \
-  -DCMAKE_BUILD_TYPE=$build_type \
-  -DCMAKE_C_COMPILER_LAUNCHER=$compiler_launcher \
-  -DCMAKE_CXX_COMPILER_LAUNCHER=$compiler_launcher \
+cmake_args=()
+
+if [ -n "$compiler_launcher" ]; then
+    cmake_args+=("-DCMAKE_C_COMPILER_LAUNCHER=$compiler_launcher")
+    cmake_args+=("-DCMAKE_CXX_COMPILER_LAUNCHER=$compiler_launcher")
+fi
+
+if [ -n "$cc_compiler" ]; then
+    cmake_args+=("-DCMAKE_C_COMPILER=$cc_compiler")
+fi
+
+if [ -n "$cxx_compiler" ]; then
+    cmake_args+=("-DCMAKE_CXX_COMPILER=$cxx_compiler")
+fi
+
+if [ "$#" -gt 0 ]; then
+    cmake_args+=("$@")
+fi
+
+cmake -S llvm -B "$build_dir" -G "$generator" \
+  -DCMAKE_INSTALL_PREFIX="$install_dir" \
+  -DCMAKE_BUILD_TYPE="$build_type" \
   -DLLVM_TARGETS_TO_BUILD=all \
   -DBUILD_SHARED_LIBS=OFF \
   -DLLVM_BUILD_32_BITS=OFF \
@@ -110,4 +132,5 @@ cmake -S llvm -B $build_dir -G $generator \
   -DLLVM_USE_SYMLINKS=ON \
   -DLLVM_VERSION_PRINTER_SHOW_BUILD_CONFIG=ON \
   -DLLVM_VERSION_PRINTER_SHOW_HOST_TARGET_INFO=ON \
-  -DLLVM_WINDOWS_PREFER_FORWARD_SLASH=OFF
+  -DLLVM_WINDOWS_PREFER_FORWARD_SLASH=OFF \
+  "${cmake_args[@]}"
