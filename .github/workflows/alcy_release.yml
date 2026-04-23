@@ -84,7 +84,7 @@ jobs:
             -DLLVM_ENABLE_ICU=OFF \
             -DLLVM_ENABLE_IDE=OFF \
             -DLLVM_ENABLE_IO_SANDBOX=OFF \
-            -DLLVM_ENABLE_LIBCXX=OFF \
+            -DLLVM_ENABLE_LIBCXX=ON \
             -DLLVM_ENABLE_LIBEDIT=OFF \
             -DLLVM_ENABLE_LIBPFM=OFF \
             -DLLVM_ENABLE_LIBXML2=OFF \
