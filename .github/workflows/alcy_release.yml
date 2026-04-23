@@ -49,6 +49,11 @@ jobs:
 
       - name: Configure CMake
         run: |
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            export CC="clang"
+            export CXX="clang++"
+          fi
+          
           ./.alcy/configure.sh $build_dir $install_dir Release Ninja ccache
 
       - name: Build and Install
@@ -70,7 +75,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          files: "llvm-${{ matrix.triple }}.*"
+          files: |
+            llvm-${{ matrix.triple }}.zip
+            llvm-${{ matrix.triple }}.tar.gz
           draft: true
           append_body: true
           overwrite_files: true
