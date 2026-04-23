@@ -156,9 +156,9 @@ jobs:
         run: |
           basename="llvm-${{ matrix.triple }}"
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            7z a $basename.zip ./install
+            7z a $basename.zip ./install/*
           else
-            tar -czf $basename.tar.gz ./install
+            tar -czf $basename.tar.gz -C ./install .
           fi
 
       - name: Upload to Release
