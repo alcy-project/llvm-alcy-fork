@@ -2,15 +2,17 @@
 
 script_dir=$(cd $(dirname $0) && pwd)
 root_dir=$(cd $script_dir/.. && pwd)
-build_dir=${1:-"$script_dir/build"}
-install_dir=${2:-"$script_dir/install"}
-build_type=${3:-"Release"}
-generator=${4:-"Ninja"}
-compiler_launcher=${5:-""}
-cc_compiler=${6:-""}
-cxx_compiler=${7:-""}
 
-shift_count=$(( $# < 7 ? $# : 7 ))
+source_dir=${1:-"$root_dir/llvm"}
+build_dir=${2:-"$script_dir/build"}
+install_dir=${3:-"$script_dir/install"}
+build_type=${4:-"Release"}
+generator=${5:-"Ninja"}
+compiler_launcher=${6:-""}
+cc_compiler=${7:-""}
+cxx_compiler=${8:-""}
+
+shift_count=$(( $# < 8 ? $# : 8 ))
 shift $shift_count
 
 mkdir -p $build_dir
@@ -35,7 +37,7 @@ if [ "$#" -gt 0 ]; then
     cmake_args+=("$@")
 fi
 
-cmake -S llvm -B "$build_dir" -G "$generator" \
+cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DCMAKE_INSTALL_PREFIX="$install_dir" \
   -DCMAKE_BUILD_TYPE="$build_type" \
   -DLLVM_TARGETS_TO_BUILD=all \

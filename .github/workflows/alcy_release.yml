@@ -54,7 +54,7 @@ jobs:
             export CXX="clang++"
           fi
           
-          ./.alcy/configure.sh $build_dir $install_dir Release Ninja ccache
+          ./.alcy/configure.sh ./llvm $build_dir $install_dir Release Ninja ccache
 
       - name: Build and Install
         run: |
