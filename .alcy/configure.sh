@@ -39,6 +39,7 @@ fi
 
 echo "extra cmake args: ${cmake_args[@]}"
 
+# Run `cmake -N -L -S llvm -B ./.alcy/build` or open `llvm/docs/CMake.rst` to see all build flags
 cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DCMAKE_INSTALL_PREFIX="$install_dir" \
   -DCMAKE_BUILD_TYPE="$build_type" \
@@ -56,6 +57,7 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_BUILD_TESTS=OFF \
   -DLLVM_BUILD_TOOLS=OFF \
   -DLLVM_BUILD_UTILS=OFF \
+  -DLLVM_DYLIB_COMPONENTS="" \
   -DLLVM_ENABLE_ASSERTIONS=OFF \
   -DLLVM_ENABLE_BACKTRACES=ON \
   -DLLVM_ENABLE_BINDINGS=OFF \
@@ -95,7 +97,9 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_ENABLE_PIC=ON \
   -DLLVM_ENABLE_PLUGINS=ON \
   -DLLVM_ENABLE_PROFCHECK=OFF \
+  -DLLVM_ENABLE_PROJECTS="" \
   -DLLVM_ENABLE_RTTI=OFF \
+  -DLLVM_ENABLE_RUNTIMES="" \
   -DLLVM_ENABLE_SPHINX=OFF \
   -DLLVM_ENABLE_TELEMETRY=ON \
   -DLLVM_ENABLE_THREADS=ON \
@@ -121,6 +125,7 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_INSTALL_MODULEMAPS=OFF \
   -DLLVM_INSTALL_TOOLCHAIN_ONLY=OFF \
   -DLLVM_INSTALL_UTILS=OFF \
+  -DLLVM_STATIC_LINK_CXX_STDLIB=OFF \
   -DLLVM_TOOL_DRAGONEGG_BUILD=OFF \
   -DLLVM_TOOL_OPENMP_BUILD=OFF \
   -DLLVM_UNREACHABLE_OPTIMIZE=ON \

@@ -22,10 +22,24 @@ jobs:
         include:
           - os: ubuntu-latest
             triple: x86_64-unknown-linux-gnu
+            cc: clang
+            cxx: clang++
+          - os: ubuntu-latest
+            triple: x86_64-musl-linux-gnu
+            cc: clang
+            cxx: clang++
           - os: macos-latest
             triple: x86_64-apple-darwin
+            cc: clang
+            cxx: clang++
+          - os: macos-latest
+            triple: aarch64-apple-darwin
+            cc: clang
+            cxx: clang++
           - os: windows-latest
             triple: x86_64-pc-windows-msvc
+            cc: cl
+            cxx: cl
     defaults:
       run:
         shell: bash
@@ -45,16 +59,21 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ matrix.os }}-llvm-ccache
-          max-size: 2G
+          max-size: 4G
+
+      - name: Setup mold
+        if: runner.os == 'Linux'
+        uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444
+        with:
+          mold-version: 2.41.0
+          make-default: true
 
       - name: Configure CMake
         run: |
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
-            export CC="clang"
-            export CXX="clang++"
-          fi
+          export CC="${{ matrix.cc }}"
+          export CXX="${{ matrix.cxx }}"
           
-          ./.alcy/configure.sh ./llvm $build_dir $install_dir Release Ninja ccache
+          ./.alcy/configure.sh ./llvm $build_dir $install_dir Release Ninja ccache "" "" -DLLVM_DEFAULT_TARGET_TRIPLE="${{ matrix.triple }}"
 
       - name: Build and Install
         run: |
