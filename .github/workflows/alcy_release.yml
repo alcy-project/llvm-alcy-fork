@@ -38,8 +38,8 @@ jobs:
             cxx: clang++
           - os: windows-latest
             triple: x86_64-pc-windows-msvc
-            cc: cl
-            cxx: cl
+            cc: clang-cl
+            cxx: clang-cl
     defaults:
       run:
         shell: bash
