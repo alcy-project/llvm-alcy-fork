@@ -37,6 +37,8 @@ if [ "$#" -gt 0 ]; then
     cmake_args+=("$@")
 fi
 
+echo "extra cmake args: ${cmake_args[@]}"
+
 cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DCMAKE_INSTALL_PREFIX="$install_dir" \
   -DCMAKE_BUILD_TYPE="$build_type" \
