@@ -57,6 +57,12 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
 
+      - name: Install libc++
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libc++-dev libc++abi-dev
+
       - name: Install Ninja
         uses: llvm/actions/install-ninja@main
 
