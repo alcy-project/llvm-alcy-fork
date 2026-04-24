@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - os: ubuntu-latest
             triple: x86_64-unknown-linux-gnu
@@ -68,6 +68,16 @@ jobs:
           mold-version: 2.41.0
           make-default: true
 
+      - name: Install musl-tools
+        if: matrix.triple == 'x86_64-musl-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Setup MSVC
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1460a772e4cf7358f9f2f23773240813e40e7a894
+
       - name: Configure CMake
         run: |
           export CC="${{ matrix.cc }}"
@@ -78,7 +88,7 @@ jobs:
       - name: Build and Install
         run: |
           ccache -z
-          cmake --build $build_dir --target install
+          cmake --build $build_dir --target install -j
           ccache -s
 
       - name: Archive Binaries
