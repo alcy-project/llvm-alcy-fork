@@ -38,8 +38,9 @@ jobs:
             cxx: clang++
           - os: windows-latest
             triple: x86_64-pc-windows-msvc
-            cc: cc # MinGW
-            cxx: c++ # MinGW
+            cc: clang
+            cxx: clang++
+            extra_args: -DLLVM_ENABLE_LIBCXX=OFF
     defaults:
       run:
         shell: bash
@@ -79,7 +80,7 @@ jobs:
           export CC="${{ matrix.cc }}"
           export CXX="${{ matrix.cxx }}"
           
-          ./.alcy/configure.sh ./llvm $build_dir $install_dir Release Ninja ccache "" "" -DLLVM_DEFAULT_TARGET_TRIPLE="${{ matrix.triple }}"
+          ./.alcy/configure.sh ./llvm $build_dir $install_dir Release Ninja ccache "" "" -DLLVM_DEFAULT_TARGET_TRIPLE="${{ matrix.triple }}" ${{ matrix.extra_args }}
 
       - name: Build and Install
         run: |
