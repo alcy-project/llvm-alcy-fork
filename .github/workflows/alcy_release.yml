@@ -25,7 +25,7 @@ jobs:
             cc: clang
             cxx: clang++
           - os: ubuntu-latest
-            triple: x86_64-musl-linux-gnu
+            triple: x86_64-unknown-linux-musl
             cc: clang
             cxx: clang++
           - os: macos-latest
@@ -58,7 +58,7 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ matrix.os }}-llvm-ccache
+          key: ${{ matrix.os }}-${{ matrix.triple }}-${{ matrix.cc}}-llvm-ccache
           max-size: 4G
 
       - name: Setup mold
