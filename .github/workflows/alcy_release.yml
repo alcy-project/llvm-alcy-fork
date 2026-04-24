@@ -38,8 +38,8 @@ jobs:
             cxx: clang++
           - os: windows-latest
             triple: x86_64-pc-windows-msvc
-            cc: clang
-            cxx: clang++
+            cc: cc # MinGW
+            cxx: c++ # MinGW
     defaults:
       run:
         shell: bash
