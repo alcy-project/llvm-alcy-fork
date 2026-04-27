@@ -66,11 +66,6 @@ jobs:
           max-size: 4G
           job-summary: ""
 
-      - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@0d6a7d60b009d01c9e7523be22153ff8f19460d3
-        with:
-          cmake-version: 4.3.2
-
       - name: Setup mold
         if: runner.os == 'Linux'
         uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444
