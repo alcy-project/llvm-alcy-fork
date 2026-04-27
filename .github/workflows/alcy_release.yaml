@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    name: Build and Release (${{ matrix.platform.triple }})
+    name: Build and Release (${{ matrix.build_type }}-${{ matrix.platform.triple }})
     runs-on: ${{ matrix.platform.os }}
     strategy:
       fail-fast: false
@@ -29,9 +29,6 @@ jobs:
           - { os: macos-latest,  triple: x86_64-apple-darwin }
           - { os: macos-latest,  triple: aarch64-apple-darwin }
           - { os: windows-latest, triple: x86_64-pc-windows-msvc }
-    # env:
-    #   CC: ${{ matrix.cc }}
-    #   CXX: ${{ matrix.cxx }}
     defaults:
       run:
         shell: bash
@@ -52,7 +49,7 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@4d0316e3a1f3f3c1a7a424368dc64f860c345402
         with:
-          key: ${{ matrix.platform.os }}-${{ matrix.platform.triple }}-${{ matrix.cc }}-llvm-ccache
+          key: ${{ runner.os }}-${{ matrix.build_type }}-${{ matrix.platform.triple }}-${{ matrix.cc }}-llvm-ccache
           max-size: 4G
           job-summary: ""
 
