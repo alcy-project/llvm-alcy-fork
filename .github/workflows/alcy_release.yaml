@@ -13,8 +13,8 @@ env:
 
 jobs:
   build:
-    name: Build and Release (${{ matrix.build_type }}-${{ matrix.platform.triple }})
-    runs-on: ${{ matrix.platform.os }}
+    name: Build and Release (${{ matrix.build_type }}-${{ matrix.triple }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -22,13 +22,20 @@ jobs:
         cxx: [clang++]
         libcxx: [true]
         build_type: [debug, release]
-        platform:
-          - { os: ubuntu-latest, triple: x86_64-unknown-linux-gnu }
-          - { os: ubuntu-latest, triple: x86_64-unknown-linux-musl }
-          - { os: ubuntu-latest, triple: riscv64-unknown-linux-gnu }
-          - { os: macos-latest,  triple: x86_64-apple-darwin }
-          - { os: macos-latest,  triple: aarch64-apple-darwin }
-          - { os: windows-latest, triple: x86_64-pc-windows-msvc }
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            triple: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            triple: x86_64-unknown-linux-musl
+          - os: ubuntu-latest
+            triple: riscv64-unknown-linux-gnu
+          - os: macos-latest
+            triple: aarch64-apple-darwin
+          - os: macos-latest
+            triple: x86_64-apple-darwin
+          - os: windows-latest
+            triple: x86_64-pc-windows-msvc
     defaults:
       run:
         shell: bash
@@ -49,7 +56,7 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@4d0316e3a1f3f3c1a7a424368dc64f860c345402
         with:
-          key: ${{ runner.os }}-${{ matrix.build_type }}-${{ matrix.platform.triple }}-${{ matrix.cc }}-llvm-ccache
+          key: ${{ runner.os }}-${{ matrix.build_type }}-${{ matrix.triple }}-${{ matrix.cc }}-llvm-ccache
           max-size: 4G
           job-summary: ""
 
@@ -66,14 +73,14 @@ jobs:
           make-default: true
 
       - name: Install musl-tools
-        if: matrix.platform.triple == 'x86_64-musl-linux-gnu'
+        if: matrix.triple == 'x86_64-musl-linux-gnu'
         run: |
           sudo apt-get update
           sudo apt-get install -y musl-tools
 
       - name: Configure CMake
         run: |
-          ./.alcy/configure.sh ./llvm $build_dir $install_dir ${{ matrix.build_type }} Ninja ccache ${{ matrix.cc }} ${{ matrix.cxx }} -DLLVM_DEFAULT_TARGET_TRIPLE="${{ matrix.platform.triple }}" -DLLVM_ENABLE_LIBCXX="${{ matrix.libcxx }}"
+          ./.alcy/configure.sh ./llvm $build_dir $install_dir ${{ matrix.build_type }} Ninja ccache ${{ matrix.cc }} ${{ matrix.cxx }} -DLLVM_DEFAULT_TARGET_TRIPLE="${{ matrix.triple }}" -DLLVM_ENABLE_LIBCXX="${{ matrix.libcxx }}"
 
       - name: Build and Install
         run: |
@@ -83,7 +90,7 @@ jobs:
 
       - name: Archive Binaries
         run: |
-          basename="llvm-${{ matrix.build_type }}-${{ matrix.platform.triple }}"
+          basename="llvm-${{ matrix.build_type }}-${{ matrix.triple }}"
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             7z a $basename.zip $install_dir/*
           else
@@ -96,8 +103,8 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-            llvm-${{ matrix.platform.triple }}.zip
-            llvm-${{ matrix.platform.triple }}.tar.gz
+            llvm-${{ matrix.triple }}.zip
+            llvm-${{ matrix.triple }}.tar.gz
           draft: true
           append_body: true
           overwrite_files: true
