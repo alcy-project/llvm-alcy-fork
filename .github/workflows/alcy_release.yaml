@@ -18,24 +18,38 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cc: [clang]
-        cxx: [clang++]
-        libcxx: [true]
         build_type: [debug, release]
-        os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - os: ubuntu-latest
             triple: x86_64-unknown-linux-gnu
+            cc: clang
+            cxx: clang++
+            libcxx: true
           - os: ubuntu-latest
             triple: x86_64-unknown-linux-musl
+            cc: clang
+            cxx: clang++
+            libcxx: true
           - os: ubuntu-latest
             triple: riscv64-unknown-linux-gnu
+            cc: clang
+            cxx: clang++
+            libcxx: true
           - os: macos-latest
             triple: aarch64-apple-darwin
+            cc: clang
+            cxx: clang++
+            libcxx: true
           - os: macos-latest
             triple: x86_64-apple-darwin
+            cc: clang
+            cxx: clang++
+            libcxx: true
           - os: windows-latest
             triple: x86_64-pc-windows-msvc
+            cc: clang
+            cxx: clang++
+            libcxx: true
     defaults:
       run:
         shell: bash
