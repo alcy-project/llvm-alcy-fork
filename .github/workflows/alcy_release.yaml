@@ -109,8 +109,8 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-            llvm-${{ matrix.triple }}.zip
-            llvm-${{ matrix.triple }}.tar.gz
+            llvm-${{ matrix.build_type }}-${{ matrix.triple }}.zip
+            llvm-${{ matrix.build_type }}-${{ matrix.triple }}.tar.gz
           draft: true
           append_body: true
           overwrite_files: true
