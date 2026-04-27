@@ -19,37 +19,29 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [debug, release]
+        cc: [clang]
+        cxx: [clang++]
+        libcxx: [true]
+        triple:
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - riscv64-unknown-linux-gnu
+          - aarch64-apple-darwin
+          - x86_64-apple-darwin
+          - x86_64-pc-windows-msvc
         include:
-          - os: ubuntu-latest
-            triple: x86_64-unknown-linux-gnu
-            cc: clang
-            cxx: clang++
-            libcxx: true
-          - os: ubuntu-latest
-            triple: x86_64-unknown-linux-musl
-            cc: clang
-            cxx: clang++
-            libcxx: true
-          - os: ubuntu-latest
-            triple: riscv64-unknown-linux-gnu
-            cc: clang
-            cxx: clang++
-            libcxx: true
-          - os: macos-latest
-            triple: aarch64-apple-darwin
-            cc: clang
-            cxx: clang++
-            libcxx: true
-          - os: macos-latest
-            triple: x86_64-apple-darwin
-            cc: clang
-            cxx: clang++
-            libcxx: true
-          - os: windows-latest
-            triple: x86_64-pc-windows-msvc
-            cc: clang
-            cxx: clang++
-            libcxx: true
+          - triple: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - triple: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+          - triple: riscv64-unknown-linux-gnu
+            os: ubuntu-latest
+          - triple: aarch64-apple-darwin
+            os: macos-latest
+          - triple: x86_64-apple-darwin
+            os: macos-latest
+          - triple: x86_64-pc-windows-msvc
+            os: windows-latest
     defaults:
       run:
         shell: bash
