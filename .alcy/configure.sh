@@ -7,12 +7,15 @@ source_dir=${1:-"$root_dir/llvm"}
 build_dir=${2:-"$script_dir/build"}
 install_dir=${3:-"$script_dir/install"}
 build_type=${4:-"Release"}
-generator=${5:-"Ninja"}
-compiler_launcher=${6:-""}
-cc_compiler=${7:-""}
-cxx_compiler=${8:-""}
+assertions=${5:-"OFF"}
+target_triple=${6:-"host"}
+libcxx=${7:-"ON"}
+generator=${8:-"Ninja"}
+compiler_launcher=${9:-""}
+cc_compiler=${10:-""}
+cxx_compiler=${11:-""}
 
-shift_count=$(( $# < 8 ? $# : 8 ))
+shift_count=$(( $# < 11 ? $# : 11 ))
 shift $shift_count
 
 mkdir -p $build_dir
@@ -43,6 +46,9 @@ echo "extra cmake args: ${cmake_args[@]}"
 cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DCMAKE_INSTALL_PREFIX="$install_dir" \
   -DCMAKE_BUILD_TYPE="$build_type" \
+  -DLLVM_ENABLE_ASSERTIONS=$assertions \
+  -DLLVM_DEFAULT_TARGET_TRIPLE=$target_triple \
+  -DLLVM_ENABLE_LIBCXX=$libcxx \
   -DLLVM_TARGETS_TO_BUILD=all \
   -DBUILD_SHARED_LIBS=OFF \
   -DLLVM_BUILD_32_BITS=OFF \
@@ -58,7 +64,6 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_BUILD_TOOLS=OFF \
   -DLLVM_BUILD_UTILS=OFF \
   -DLLVM_DYLIB_COMPONENTS="" \
-  -DLLVM_ENABLE_ASSERTIONS=OFF \
   -DLLVM_ENABLE_BACKTRACES=ON \
   -DLLVM_ENABLE_BINDINGS=OFF \
   -DLLVM_ENABLE_CRASH_DUMPS=OFF \
@@ -79,7 +84,6 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_ENABLE_ICU=OFF \
   -DLLVM_ENABLE_IDE=OFF \
   -DLLVM_ENABLE_IO_SANDBOX=OFF \
-  -DLLVM_ENABLE_LIBCXX=ON \
   -DLLVM_ENABLE_LIBEDIT=OFF \
   -DLLVM_ENABLE_LIBPFM=OFF \
   -DLLVM_ENABLE_LIBXML2=OFF \

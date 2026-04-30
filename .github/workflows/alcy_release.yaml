@@ -81,7 +81,26 @@ jobs:
 
       - name: Configure CMake
         run: |
-          ./.alcy/configure.sh ./llvm $build_dir $install_dir ${{ matrix.build_type }} Ninja ccache ${{ matrix.cc }} ${{ matrix.cxx }} -DLLVM_DEFAULT_TARGET_TRIPLE="${{ matrix.triple }}" -DLLVM_ENABLE_LIBCXX="${{ matrix.libcxx }}"
+          if [ "${{ matrix.build_type }}" = "debug" ]; then
+            actual_build_type="RelWithDebInfo"
+            assertions="ON"
+          else
+            actual_build_type="Release"
+            assertions="OFF"
+          fi
+
+          ./.alcy/configure.sh \
+            ./llvm \
+            $build_dir \
+            $install_dir \
+            $actual_build_type \
+            $assertions \
+            ${{ matrix.triple }} \
+            ${{ matrix.libcxx }} \
+            Ninja \
+            ccache \
+            ${{ matrix.cc }} \
+            ${{ matrix.cxx }}
 
       - name: Build and Install
         run: |
