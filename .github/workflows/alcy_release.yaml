@@ -21,7 +21,6 @@ jobs:
         build_type: [debug, release]
         cc: [clang]
         cxx: [clang++]
-        libcxx: [true]
         triple:
           - x86_64-unknown-linux-gnu
           - x86_64-unknown-linux-musl
@@ -32,16 +31,22 @@ jobs:
         include:
           - triple: x86_64-unknown-linux-gnu
             os: ubuntu-latest
+            libcxx: true
           - triple: x86_64-unknown-linux-musl
             os: ubuntu-latest
+            libcxx: true
           - triple: riscv64-unknown-linux-gnu
             os: ubuntu-latest
+            libcxx: true
           - triple: aarch64-apple-darwin
             os: macos-latest
+            libcxx: true
           - triple: x86_64-apple-darwin
             os: macos-latest
+            libcxx: true
           - triple: x86_64-pc-windows-msvc
             os: windows-latest
+            libcxx: false
     defaults:
       run:
         shell: bash
