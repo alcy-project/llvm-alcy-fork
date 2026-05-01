@@ -87,7 +87,8 @@ jobs:
       - name: Configure CMake
         run: |
           if [ "${{ matrix.build_type }}" = "debug" ]; then
-            actual_build_type="RelWithDebInfo"
+            # actual_build_type="RelWithDebInfo"
+            actual_build_type="Debug"
             assertions="ON"
           else
             actual_build_type="Release"
