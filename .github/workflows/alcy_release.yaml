@@ -47,6 +47,7 @@ jobs:
           - triple: x86_64-pc-windows-msvc
             os: windows-latest
             libcxx: false
+            extra_args: "-DLLVM_ENABLE_RPMALLOC=ON -DLLVM_ENABLE_WARNINGS=OFF"
     defaults:
       run:
         shell: bash
@@ -97,16 +98,17 @@ jobs:
 
           ./.alcy/configure.sh \
             ./llvm \
-            $build_dir \
-            $install_dir \
-            $actual_build_type \
-            $assertions \
-            ${{ matrix.triple }} \
-            ${{ matrix.libcxx }} \
+            "$build_dir" \
+            "$install_dir" \
+            "$actual_build_type" \
+            "$assertions" \
+            "${{ matrix.triple }}" \
+            "${{ matrix.libcxx }}" \
             Ninja \
             ccache \
-            ${{ matrix.cc }} \
-            ${{ matrix.cxx }}
+            "${{ matrix.cc }}" \
+            "${{ matrix.cxx }}" \
+            "${{ matrix.extra_args }}"
 
       - name: Build and Install
         run: |
