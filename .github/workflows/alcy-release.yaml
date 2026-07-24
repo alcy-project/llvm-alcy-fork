@@ -6,7 +6,7 @@ permissions:
 on:
   push:
     tags:
-      - 'alcy_*'
+      - 'alcy-*'
 env:
   build_dir: "./.alcy/build"
   install_dir: "./.alcy/install"
