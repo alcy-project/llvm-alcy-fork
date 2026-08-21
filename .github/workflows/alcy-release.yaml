@@ -1,0 +1,147 @@
+name: Build and Release LLVM Binaries
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - 'alcy-*'
+
+env:
+  build_dir: "./.alcy/build"
+  install_dir: "./.alcy/install"
+
+jobs:
+  build:
+    name: Build and Release (${{ matrix.build_type }}-${{ matrix.triple }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [debug, release]
+        cc: [clang]
+        cxx: [clang++]
+        triple:
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - riscv64-unknown-linux-gnu
+          - aarch64-apple-darwin
+          - x86_64-apple-darwin
+          - x86_64-pc-windows-msvc
+        include:
+          - triple: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            libcxx: true
+            extra_args: ""
+          - triple: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            libcxx: true
+            extra_args: ""
+          - triple: riscv64-unknown-linux-gnu
+            os: ubuntu-latest
+            libcxx: true
+            extra_args: ""
+          - triple: aarch64-apple-darwin
+            os: macos-latest
+            libcxx: true
+            extra_args: ""
+          - triple: x86_64-apple-darwin
+            os: macos-latest
+            libcxx: true
+            extra_args: ""
+          - triple: x86_64-pc-windows-msvc
+            os: windows-latest
+            libcxx: false
+            extra_args: "-DLLVM_ENABLE_WARNINGS=OFF -DLLVM_ENABLE_RPMALLOC=ON"
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout LLVM
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libc++-dev libc++abi-dev clang
+
+      - name: Install Ninja
+        uses: llvm/actions/install-ninja@89a8cf80982d830faab019237860b344a6390c30
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@4d0316e3a1f3f3c1a7a424368dc64f860c345402
+        with:
+          key: ${{ runner.os }}-${{ matrix.build_type }}-${{ matrix.triple }}-${{ matrix.cc }}-llvm-ccache
+          max-size: 4G
+          job-summary: ""
+
+      - name: Setup mold
+        if: runner.os == 'Linux'
+        uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444
+        with:
+          # Use latest
+          # mold-version: 2.42.0
+          make-default: true
+
+      - name: Install musl-tools
+        if: matrix.triple == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Configure CMake
+        run: |
+          if [ "${{ matrix.build_type }}" = "debug" ]; then
+            # actual_build_type="RelWithDebInfo"
+            actual_build_type="Debug"
+            assertions="ON"
+          else
+            actual_build_type="Release"
+            assertions="OFF"
+          fi
+
+          ./.alcy/configure.sh \
+            ./llvm \
+            "$build_dir" \
+            "$install_dir" \
+            "$actual_build_type" \
+            "$assertions" \
+            "${{ matrix.triple }}" \
+            "${{ matrix.libcxx }}" \
+            Ninja \
+            ccache \
+            "${{ matrix.cc }}" \
+            "${{ matrix.cxx }}" \
+            "${{ matrix.extra_args }}"
+
+      - name: Build and Install
+        run: |
+          ccache -z
+          cmake --build $build_dir --target install --parallel 2
+          ccache -s
+
+      - name: Archive Binaries
+        run: |
+          basename="llvm-${{ matrix.build_type }}-${{ matrix.triple }}"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            7z a ${basename}.zip ${install_dir}/*
+            echo "ARCHIVE_FILE=${basename}.zip" >> $GITHUB_ENV
+          else
+            tar -czf ${basename}.tar.gz -C ${install_dir} .
+            echo "ARCHIVE_FILE=${basename}.tar.gz" >> $GITHUB_ENV
+          fi
+
+      - name: Upload to Release
+        if: ${{ !env.ACT }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: ${{ env.ARCHIVE_FILE }}
+          draft: true
+          append_body: true
+          overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
