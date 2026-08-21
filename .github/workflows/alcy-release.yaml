@@ -7,6 +7,7 @@ on:
   push:
     tags:
       - 'alcy-*'
+
 env:
   build_dir: "./.alcy/build"
   install_dir: "./.alcy/install"
@@ -32,22 +33,27 @@ jobs:
           - triple: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             libcxx: true
+            extra_args: ""
           - triple: x86_64-unknown-linux-musl
             os: ubuntu-latest
             libcxx: true
+            extra_args: ""
           - triple: riscv64-unknown-linux-gnu
             os: ubuntu-latest
             libcxx: true
+            extra_args: ""
           - triple: aarch64-apple-darwin
             os: macos-latest
             libcxx: true
+            extra_args: ""
           - triple: x86_64-apple-darwin
             os: macos-latest
             libcxx: true
+            extra_args: ""
           - triple: x86_64-pc-windows-msvc
             os: windows-latest
             libcxx: false
-            extra_args: "-DLLVM_ENABLE_WARNINGS=OFF"
+            extra_args: "-DLLVM_ENABLE_WARNINGS=OFF -DLLVM_ENABLE_RPMALLOC=ON"
     defaults:
       run:
         shell: bash
@@ -76,11 +82,12 @@ jobs:
         if: runner.os == 'Linux'
         uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444
         with:
-          mold-version: 2.41.0
+          # Use latest
+          # mold-version: 2.42.0
           make-default: true
 
       - name: Install musl-tools
-        if: matrix.triple == 'x86_64-musl-linux-gnu'
+        if: matrix.triple == 'x86_64-unknown-linux-musl'
         run: |
           sudo apt-get update
           sudo apt-get install -y musl-tools
@@ -113,16 +120,18 @@ jobs:
       - name: Build and Install
         run: |
           ccache -z
-          cmake --build $build_dir --target install -j
+          cmake --build $build_dir --target install --parallel 2
           ccache -s
 
       - name: Archive Binaries
         run: |
           basename="llvm-${{ matrix.build_type }}-${{ matrix.triple }}"
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            7z a $basename.zip $install_dir/*
+            7z a ${basename}.zip ${install_dir}/*
+            echo "ARCHIVE_FILE=${basename}.zip" >> $GITHUB_ENV
           else
-            tar -czf $basename.tar.gz -C $install_dir .
+            tar -czf ${basename}.tar.gz -C ${install_dir} .
+            echo "ARCHIVE_FILE=${basename}.tar.gz" >> $GITHUB_ENV
           fi
 
       - name: Upload to Release
@@ -130,9 +139,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          files: |
-            llvm-${{ matrix.build_type }}-${{ matrix.triple }}.zip
-            llvm-${{ matrix.build_type }}-${{ matrix.triple }}.tar.gz
+          files: ${{ env.ARCHIVE_FILE }}
           draft: true
           append_body: true
           overwrite_files: true
