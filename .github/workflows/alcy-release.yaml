@@ -1,4 +1,4 @@
-name: Build and Release LLVM Binaries
+name: Build and Upload LLVM Binaries
 
 permissions:
   contents: write
