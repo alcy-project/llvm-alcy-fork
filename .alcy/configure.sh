@@ -10,12 +10,14 @@ build_type=${4:-"Release"}
 assertions=${5:-"OFF"}
 target_triple=${6:-"host"}
 libcxx=${7:-"ON"}
-generator=${8:-"Ninja"}
-compiler_launcher=${9:-""}
-cc_compiler=${10:-""}
-cxx_compiler=${11:-""}
+warning=${8:-"ON"}
+generator=${9:-"Ninja"}
+compiler_launcher=${10:-""}
+cc_compiler=${11:-""}
+cxx_compiler=${12:-""}
+max_args_count=12
 
-shift_count=$(( $# < 11 ? $# : 11 ))
+shift_count=$(( $# < $max_args_count ? $# : $max_args_count ))
 shift $shift_count
 
 mkdir -p $build_dir
@@ -49,6 +51,7 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_ENABLE_ASSERTIONS=$assertions \
   -DLLVM_DEFAULT_TARGET_TRIPLE=$target_triple \
   -DLLVM_ENABLE_LIBCXX=$libcxx \
+  -DLLVM_ENABLE_WARNINGS=$warning \
   -DLLVM_TARGETS_TO_BUILD=all \
   -DBUILD_SHARED_LIBS=OFF \
   -DLLVM_ABI_BREAKING_CHECKS=WITH_ASSERTS \
@@ -94,7 +97,7 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_ENABLE_LTO=OFF \
   -DLLVM_ENABLE_MODULES=OFF \
   -DLLVM_ENABLE_MODULE_DEBUGGING=OFF \
-  -DLLVM_ENABLE_NEW_PASS_MANAGER=TRUE \
+  -DLLVM_ENABLE_NEW_PASS_MANAGER=ON \
   -DLLVM_ENABLE_OCAMLDOC=OFF \
   -DLLVM_ENABLE_ONDISK_CAS=ON \
   -DLLVM_ENABLE_PEDANTIC=ON \
@@ -109,7 +112,6 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_ENABLE_TELEMETRY=ON \
   -DLLVM_ENABLE_THREADS=ON \
   -DLLVM_ENABLE_UNWIND_TABLES=ON \
-  -DLLVM_ENABLE_WARNINGS=ON \
   -DLLVM_ENABLE_WERROR=OFF \
   -DLLVM_ENABLE_Z3_SOLVER=OFF \
   -DLLVM_ENABLE_ZLIB=OFF \
@@ -143,7 +145,7 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_USE_RELATIVE_PATHS_IN_FILES=OFF \
   -DLLVM_USE_SANITIZER= \
   -DLLVM_USE_SPLIT_DWARF=ON \
-  -DLLVM_USE_STATIC_ZSTD=FALSE \
+  -DLLVM_USE_STATIC_ZSTD=OFF \
   -DLLVM_USE_SYMLINKS=ON \
   -DLLVM_VERSION_PRINTER_SHOW_BUILD_CONFIG=ON \
   -DLLVM_VERSION_PRINTER_SHOW_HOST_TARGET_INFO=ON \
