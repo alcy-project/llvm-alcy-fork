@@ -16,6 +16,7 @@ jobs:
   build:
     name: Build and Release (${{ matrix.build_type }}-${{ matrix.triple }})
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
     strategy:
       fail-fast: false
       matrix:
@@ -32,26 +33,32 @@ jobs:
         include:
           - triple: x86_64-unknown-linux-gnu
             os: ubuntu-latest
+            container: ""
             libcxx: true
             extra_args: ""
           - triple: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            libcxx: true
+            container: alpine:latest
+            libcxx: false
             extra_args: ""
           - triple: riscv64-unknown-linux-gnu
             os: ubuntu-latest
+            container: ""
             libcxx: true
             extra_args: ""
           - triple: aarch64-apple-darwin
             os: macos-latest
+            container: ""
             libcxx: true
             extra_args: ""
           - triple: x86_64-apple-darwin
             os: macos-latest
+            container: ""
             libcxx: true
             extra_args: ""
           - triple: x86_64-pc-windows-msvc
             os: windows-latest
+            container: ""
             libcxx: false
             extra_args: "-DLLVM_ENABLE_WARNINGS=OFF -DLLVM_ENABLE_RPMALLOC=ON"
     defaults:
@@ -62,13 +69,31 @@ jobs:
       - name: Checkout LLVM
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
+      - name: Install dependencies (Alpine / Musl)
+        if: matrix.triple == 'x86_64-unknown-linux-musl'
+        run: |
+          apk update
+          apk add --no-cache \
+            bash \
+            cmake \
+            ninja \
+            clang \
+            lld \
+            build-base \
+            ccache \
+            zstd \
+            tar \
+            git \
+            7zip
+
       - name: Install dependencies (Ubuntu)
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.triple != 'x86_64-unknown-linux-musl'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libc++-dev libc++abi-dev clang
 
       - name: Install Ninja
+        if: matrix.triple != 'x86_64-unknown-linux-musl'
         uses: llvm/actions/install-ninja@89a8cf80982d830faab019237860b344a6390c30
 
       - name: Setup ccache
@@ -79,18 +104,12 @@ jobs:
           job-summary: ""
 
       - name: Setup mold
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.triple != 'x86_64-unknown-linux-musl'
         uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444
         with:
           # Use latest
           # mold-version: 2.42.0
           make-default: true
-
-      - name: Install musl-tools
-        if: matrix.triple == 'x86_64-unknown-linux-musl'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y musl-tools
 
       - name: Configure CMake
         run: |
