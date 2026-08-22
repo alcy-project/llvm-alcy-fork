@@ -95,8 +95,8 @@ jobs:
       - name: Configure CMake
         run: |
           if [ "${{ matrix.build_type }}" = "debug" ]; then
-            # actual_build_type="RelWithDebInfo"
-            actual_build_type="Debug"
+            actual_build_type="RelWithDebInfo"
+            # actual_build_type="Debug"
             assertions="ON"
           else
             actual_build_type="Release"
@@ -130,8 +130,10 @@ jobs:
             7z a ${basename}.zip ${install_dir}/*
             echo "ARCHIVE_FILE=${basename}.zip" >> $GITHUB_ENV
           else
-            tar -czf ${basename}.tar.gz -C ${install_dir} .
-            echo "ARCHIVE_FILE=${basename}.tar.gz" >> $GITHUB_ENV
+            # tar -czf ${basename}.tar.gz -C ${install_dir} .
+            # echo "ARCHIVE_FILE=${basename}.tar.gz" >> $GITHUB_ENV
+            tar --use-compress-program="zstd -T0 -19" -cf ${basename}.tar.zst -C ${install_dir} .
+            echo "ARCHIVE_FILE=${basename}.tar.zst" >> $GITHUB_ENV
           fi
 
       - name: Upload to Release
