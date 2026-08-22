@@ -121,6 +121,14 @@ jobs:
           # mold-version: 2.42.0
           make-default: true
 
+      - name: Cache CMake build directory
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ${{ env.build_dir }}
+          key: cmake-${{ runner.os }}-${{ matrix.build_type }}-${{ matrix.triple }}-${{ github.sha }}
+          restore-keys: |
+            cmake-${{ runner.os }}-${{ matrix.build_type }}-${{ matrix.triple }}-
+
       - name: Configure CMake
         run: |
           if [ "${{ matrix.build_type }}" = "debug" ]; then
