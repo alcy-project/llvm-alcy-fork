@@ -94,7 +94,8 @@ jobs:
             zstd \
             tar \
             git \
-            7zip
+            7zip \
+            python3
 
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux' && matrix.triple != 'x86_64-unknown-linux-musl'
