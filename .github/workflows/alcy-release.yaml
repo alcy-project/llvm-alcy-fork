@@ -75,7 +75,7 @@ jobs:
             libcxx: false
             warning: false
             ccache: false
-            extra_args: "-DLLVM_ENABLE_RPMALLOC=ON"
+            extra_args: ""
     defaults:
       run:
         shell: bash
