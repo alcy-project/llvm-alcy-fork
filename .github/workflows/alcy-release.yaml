@@ -133,8 +133,8 @@ jobs:
       - name: Configure CMake
         run: |
           if [ "${{ matrix.build_type }}" = "debug" ]; then
-            actual_build_type="RelWithDebInfo"
-            # actual_build_type="Debug"
+            # actual_build_type="RelWithDebInfo"
+            actual_build_type="Debug"
             assertions="ON"
           else
             actual_build_type="Release"
@@ -159,8 +159,9 @@ jobs:
       - name: Build and Install
         run: |
           ccache -z
-          cmake --build $build_dir --target install --parallel 2
-          ccache -s
+          # cmake --build $build_dir --target install --parallel 2
+          ninja -C $build_dir install
+          ccache -s -v
 
       - name: Archive Binaries
         run: |

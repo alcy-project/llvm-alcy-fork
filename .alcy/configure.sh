@@ -13,8 +13,8 @@ libcxx=${7:-"ON"}
 warning=${8:-"ON"}
 generator=${9:-"Ninja"}
 compiler_launcher=${10:-""}
-cc_compiler=${11:-""}
-cxx_compiler=${12:-""}
+cc_compiler=${11:-"clang"}
+cxx_compiler=${12:-"clang++"}
 max_args_count=12
 
 shift_count=$(( $# < $max_args_count ? $# : $max_args_count ))
@@ -42,18 +42,25 @@ if [ "$#" -gt 0 ]; then
     cmake_args+=("$@")
 fi
 
+debug_flags="-O1 -gline-tables-only"
+reldbg_flags="-O2 -gline-tables-only"
+release_flags="-O3 -g0"
+
 echo "extra cmake args: ${cmake_args[@]}"
 
 # Run `cmake -N -L -S llvm -B ./.alcy/build` or open `llvm/docs/CMake.rst` to see all build flags
 cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DCMAKE_INSTALL_PREFIX="$install_dir" \
   -DCMAKE_BUILD_TYPE="$build_type" \
+  -DCMAKE_CXX_FLAGS_DEBUG="$debug_flags" \
+  -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="$reldbg_flags" \
+  -DCMAKE_CXX_FLAGS_RELEASE="$release_flags" \
+  -DBUILD_SHARED_LIBS=OFF \
   -DLLVM_ENABLE_ASSERTIONS=$assertions \
   -DLLVM_DEFAULT_TARGET_TRIPLE=$target_triple \
   -DLLVM_ENABLE_LIBCXX=$libcxx \
   -DLLVM_ENABLE_WARNINGS=$warning \
   -DLLVM_TARGETS_TO_BUILD=all \
-  -DBUILD_SHARED_LIBS=OFF \
   -DLLVM_ABI_BREAKING_CHECKS=WITH_ASSERTS \
   -DLLVM_BUILD_32_BITS=OFF \
   -DLLVM_BUILD_BENCHMARKS=OFF \
@@ -67,6 +74,7 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_BUILD_TESTS=OFF \
   -DLLVM_BUILD_TOOLS=OFF \
   -DLLVM_BUILD_UTILS=OFF \
+  -DLLVM_CCACHE_BUILD=ON \
   -DLLVM_DYLIB_COMPONENTS="" \
   -DLLVM_ENABLE_BACKTRACES=ON \
   -DLLVM_ENABLE_BINDINGS=OFF \
@@ -117,6 +125,7 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_ENABLE_ZLIB=OFF \
   -DLLVM_ENABLE_ZSTD=OFF \
   -DLLVM_EXPORT_SYMBOLS_FOR_PLUGINS=OFF \
+  -DLLVM_EXTERNALIZE_DEBUGINFO=ON \
   -DLLVM_FORCE_ENABLE_STATS=OFF \
   -DLLVM_FORCE_USE_OLD_TOOLCHAIN=OFF \
   -DLLVM_INCLUDE_BENCHMARKS=OFF \
@@ -133,6 +142,7 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_INSTALL_MODULEMAPS=OFF \
   -DLLVM_INSTALL_TOOLCHAIN_ONLY=OFF \
   -DLLVM_INSTALL_UTILS=OFF \
+  -DLLVM_OPTIMIZED_TABLEGEN=ON \
   -DLLVM_STATIC_LINK_CXX_STDLIB=OFF \
   -DLLVM_TOOL_DRAGONEGG_BUILD=OFF \
   -DLLVM_TOOL_OPENMP_BUILD=OFF \
