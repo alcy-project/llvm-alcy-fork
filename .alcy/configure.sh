@@ -12,7 +12,7 @@ target_triple=${6:-"host"}
 libcxx=${7:-"ON"}
 warning=${8:-"ON"}
 generator=${9:-"Ninja"}
-compiler_launcher=${10:-""}
+use_ccache=${10:-"false"}
 cc_compiler=${11:-"clang"}
 cxx_compiler=${12:-"clang++"}
 max_args_count=12
@@ -24,11 +24,6 @@ mkdir -p $build_dir
 mkdir -p $install_dir
 
 cmake_args=()
-
-if [ -n "$compiler_launcher" ]; then
-    cmake_args+=("-DCMAKE_C_COMPILER_LAUNCHER=$compiler_launcher")
-    cmake_args+=("-DCMAKE_CXX_COMPILER_LAUNCHER=$compiler_launcher")
-fi
 
 if [ -n "$cc_compiler" ]; then
     cmake_args+=("-DCMAKE_C_COMPILER=$cc_compiler")
@@ -74,7 +69,7 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DLLVM_BUILD_TESTS=OFF \
   -DLLVM_BUILD_TOOLS=OFF \
   -DLLVM_BUILD_UTILS=OFF \
-  -DLLVM_CCACHE_BUILD=ON \
+  -DLLVM_CCACHE_BUILD=$use_ccache \
   -DLLVM_DYLIB_COMPONENTS="" \
   -DLLVM_ENABLE_BACKTRACES=ON \
   -DLLVM_ENABLE_BINDINGS=OFF \
