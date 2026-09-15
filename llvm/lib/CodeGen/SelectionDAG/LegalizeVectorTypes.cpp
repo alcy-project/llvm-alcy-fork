@@ -1120,13 +1120,15 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_VSELECT(SDNode *N) {
 }
 
 /// If the operand is a vector that needs to be scalarized then the
-/// result must be v1i1, so just convert to a scalar SETCC and wrap
-/// with a scalar_to_vector since the res type is legal if we got here
+/// result must be a single-element vector, so just convert to a scalar
+/// SETCC and wrap with a scalar_to_vector since the res type is legal
+/// if we got here
 SDValue DAGTypeLegalizer::ScalarizeVecOp_VSETCC(SDNode *N) {
   assert(N->getValueType(0).isVector() &&
          N->getOperand(0).getValueType().isVector() &&
          "Operand types must be vectors");
-  assert(N->getValueType(0) == MVT::v1i1 && "Expected v1i1 type");
+  assert(N->getValueType(0).getVectorNumElements() == 1 &&
+         "Expected single-element vector type");
 
   EVT VT = N->getValueType(0);
   SDValue LHS = GetScalarizedVector(N->getOperand(0));
@@ -1156,7 +1158,8 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_VSTRICT_FSETCC(SDNode *N,
   assert(N->getValueType(0).isVector() &&
          N->getOperand(1).getValueType().isVector() &&
          "Operand types must be vectors");
-  assert(N->getValueType(0) == MVT::v1i1 && "Expected v1i1 type");
+  assert(N->getValueType(0).getVectorNumElements() == 1 &&
+         "Expected single-element vector type");
 
   EVT VT = N->getValueType(0);
   SDValue Ch = N->getOperand(0);
@@ -8735,8 +8738,8 @@ SDValue DAGTypeLegalizer::WidenVecOp_VSELECT(SDNode *N) {
 SDValue DAGTypeLegalizer::WidenVecOp_CttzElements(SDNode *N) {
   SDLoc DL(N);
   SDValue Source = N->getOperand(0);
-  EVT WideVT =
-      TLI.getTypeToTransformTo(*DAG.getContext(), Source.getValueType());
+  EVT SourceVT = Source.getValueType();
+  EVT WideVT = TLI.getTypeToTransformTo(*DAG.getContext(), SourceVT);
 
   SDValue WideSource;
   if (N->getOpcode() == ISD::CTTZ_ELTS_ZERO_POISON) {
@@ -8745,7 +8748,18 @@ SDValue DAGTypeLegalizer::WidenVecOp_CttzElements(SDNode *N) {
     // Pad the widened portion with all-ones so the extra lanes appear as
     // active (non-zero) elements and do not contribute trailing zeros.
     SDValue AllOnes = DAG.getAllOnesConstant(DL, WideVT);
-    WideSource = DAG.getInsertSubvector(DL, AllOnes, Source, 0);
+    if (WideVT.isFixedLengthVector() &&
+        getTypeAction(WideVT) == TargetLowering::TypeSplitVector) {
+      WideSource = GetWidenedVector(Source);
+      unsigned WideElts = WideVT.getVectorNumElements();
+      SmallVector<int> Mask(WideElts);
+      std::iota(Mask.begin(), Mask.end(), 0);
+      for (unsigned I = SourceVT.getVectorNumElements(); I != WideElts; ++I)
+        Mask[I] += WideElts;
+      WideSource = DAG.getVectorShuffle(WideVT, DL, WideSource, AllOnes, Mask);
+    } else {
+      WideSource = DAG.getInsertSubvector(DL, AllOnes, Source, 0);
+    }
   }
 
   return DAG.getNode(N->getOpcode(), DL, N->getValueType(0), WideSource,
