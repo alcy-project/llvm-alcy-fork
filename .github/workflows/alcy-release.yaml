@@ -85,6 +85,10 @@ jobs:
           # Emscripten (see Setup Emscripten step); extra_args override the
           # native-oriented defaults in .alcy/configure.sh (cmake keeps the
           # last -D value). Only the WebAssembly target is built.
+          # NOTE: LLVM_USE_HOST_TOOLS builds tablegen with the host compiler
+          # so no target-built .js is ever executed during the build, and
+          # LLVM_EXTERNALIZE_DEBUGINFO must stay OFF because GNU objcopy
+          # cannot process em++ outputs (.js).
           - triple: wasm32-unknown-emscripten
             build_type: debug
             os: ubuntu-latest
@@ -94,7 +98,7 @@ jobs:
             libcxx: false
             warning: true
             ccache: false
-            extra_args: "-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DLLVM_TARGETS_TO_BUILD=WebAssembly -DLLVM_ENABLE_THREADS=OFF -DLLVM_ENABLE_BACKTRACES=OFF -DLLVM_ENABLE_CRASH_OVERRIDES=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DLLVM_ENABLE_PIC=OFF -DLLVM_ENABLE_TERMINFO=OFF -DLLVM_USE_SPLIT_DWARF=OFF -DLLVM_ABI_BREAKING_CHECKS=FORCE_OFF"
+            extra_args: "-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DLLVM_TARGETS_TO_BUILD=WebAssembly -DLLVM_ENABLE_THREADS=OFF -DLLVM_ENABLE_BACKTRACES=OFF -DLLVM_ENABLE_CRASH_OVERRIDES=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DLLVM_ENABLE_PIC=OFF -DLLVM_ENABLE_TERMINFO=OFF -DLLVM_USE_SPLIT_DWARF=OFF -DLLVM_ABI_BREAKING_CHECKS=FORCE_OFF -DLLVM_USE_HOST_TOOLS=ON -DLLVM_EXTERNALIZE_DEBUGINFO=OFF"
           - triple: wasm32-unknown-emscripten
             build_type: release
             os: ubuntu-latest
@@ -104,7 +108,7 @@ jobs:
             libcxx: false
             warning: true
             ccache: false
-            extra_args: "-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DLLVM_TARGETS_TO_BUILD=WebAssembly -DLLVM_ENABLE_THREADS=OFF -DLLVM_ENABLE_BACKTRACES=OFF -DLLVM_ENABLE_CRASH_OVERRIDES=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DLLVM_ENABLE_PIC=OFF -DLLVM_ENABLE_TERMINFO=OFF -DLLVM_USE_SPLIT_DWARF=OFF -DLLVM_ABI_BREAKING_CHECKS=FORCE_OFF"
+            extra_args: "-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DLLVM_TARGETS_TO_BUILD=WebAssembly -DLLVM_ENABLE_THREADS=OFF -DLLVM_ENABLE_BACKTRACES=OFF -DLLVM_ENABLE_CRASH_OVERRIDES=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DLLVM_ENABLE_PIC=OFF -DLLVM_ENABLE_TERMINFO=OFF -DLLVM_USE_SPLIT_DWARF=OFF -DLLVM_ABI_BREAKING_CHECKS=FORCE_OFF -DLLVM_USE_HOST_TOOLS=ON -DLLVM_EXTERNALIZE_DEBUGINFO=OFF"
     defaults:
       run:
         shell: bash
