@@ -159,6 +159,20 @@ jobs:
           restore-keys: |
             cmake-${{ runner.os }}-${{ matrix.build_type }}-${{ matrix.triple }}-
 
+      - name: Verify WASM prerequisites
+        if: matrix.triple == 'wasm32-unknown-emscripten'
+        run: |
+          command -v emcc || { echo "::error::emcc not found on PATH"; exit 1; }
+          emcc -v
+          if ! command -v ninja; then
+            echo "ninja not found; installing via apt"
+            sudo apt-get update && sudo apt-get install -y --no-install-recommends ninja-build
+          fi
+          test -f "$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake" || {
+            echo "::error::Emscripten toolchain file not found under EMSDK=$EMSDK. The emsdk install may have failed."
+            exit 1
+          }
+
       - name: Configure CMake
         run: |
           if [ "${{ matrix.build_type }}" = "debug" ]; then
@@ -170,6 +184,10 @@ jobs:
             assertions="OFF"
           fi
 
+          # NOTE: ${{ matrix.extra_args }} must stay UNQUOTED below so that
+          # multi-flag values undergo word splitting. Quoted, the flags
+          # arrive as a single shell word and cmake receives one broken -D
+          # argument (e.g. toolchain path with trailing flags appended).
           ./.alcy/configure.sh \
             ./llvm \
             "$build_dir" \
@@ -183,7 +201,7 @@ jobs:
             "${{ matrix.ccache }}" \
             "${{ matrix.cc }}" \
             "${{ matrix.cxx }}" \
-            "${{ matrix.extra_args }}"
+            ${{ matrix.extra_args }}
 
       - name: Build and Install
         run: |
