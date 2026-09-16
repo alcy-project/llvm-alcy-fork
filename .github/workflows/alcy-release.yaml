@@ -86,6 +86,17 @@ jobs:
           # native-oriented defaults in .alcy/configure.sh (cmake keeps the
           # last -D value). Only the WebAssembly target is built.
           - triple: wasm32-unknown-emscripten
+            build_type: debug
+            os: ubuntu-latest
+            container: ""
+            cc: emcc
+            cxx: em++
+            libcxx: false
+            warning: true
+            ccache: false
+            extra_args: "-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DLLVM_TARGETS_TO_BUILD=WebAssembly -DLLVM_ENABLE_THREADS=OFF -DLLVM_ENABLE_BACKTRACES=OFF -DLLVM_ENABLE_CRASH_OVERRIDES=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DLLVM_ENABLE_PIC=OFF -DLLVM_ENABLE_TERMINFO=OFF -DLLVM_USE_SPLIT_DWARF=OFF -DLLVM_ABI_BREAKING_CHECKS=FORCE_OFF"
+          - triple: wasm32-unknown-emscripten
+            build_type: release
             os: ubuntu-latest
             container: ""
             cc: emcc
