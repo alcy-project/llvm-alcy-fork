@@ -41,6 +41,18 @@ debug_flags="-O1 -gline-tables-only"
 reldbg_flags="-O2 -gline-tables-only"
 release_flags="-O3 -g0"
 
+# The alcy project links LLVM static libraries with the static CRT
+# (-fms-runtime-lib=static[_debug], i.e. /MT[d]). LLVM must therefore be
+# built with the same CRT, otherwise lld-link fails with
+# "/failifmismatch: mismatch detected for 'RuntimeLibrary'".
+# CMAKE_MSVC_RUNTIME_LIBRARY is only honored by MSVC-like compilers,
+# so passing it unconditionally is a no-op on Linux/macOS.
+if [ "$build_type" = "Debug" ]; then
+    msvc_runtime="MultiThreadedDebug"
+else
+    msvc_runtime="MultiThreaded"
+fi
+
 echo "extra cmake args: ${cmake_args[@]}"
 
 # Run `cmake -N -L -S llvm -B ./.alcy/build` or open `llvm/docs/CMake.rst` to see all build flags
@@ -50,6 +62,7 @@ cmake -S "$source_dir" -B "$build_dir" -G "$generator" \
   -DCMAKE_CXX_FLAGS_DEBUG="$debug_flags" \
   -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="$reldbg_flags" \
   -DCMAKE_CXX_FLAGS_RELEASE="$release_flags" \
+  -DCMAKE_MSVC_RUNTIME_LIBRARY="$msvc_runtime" \
   -DBUILD_SHARED_LIBS=OFF \
   -DLLVM_ENABLE_ASSERTIONS=$assertions \
   -DLLVM_DEFAULT_TARGET_TRIPLE=$target_triple \
