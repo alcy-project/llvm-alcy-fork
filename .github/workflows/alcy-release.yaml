@@ -44,42 +44,36 @@ jobs:
             container: ""
             libcxx: true
             warning: true
-            ccache: true
             extra_args: ""
           - triple: x86_64-unknown-linux-musl
             os: ubuntu-26.04
             container: alpine:latest
             libcxx: false
             warning: true
-            ccache: true
             extra_args: ""
           - triple: riscv64-unknown-linux-gnu
             os: ubuntu-26.04
             container: ""
             libcxx: true
             warning: true
-            ccache: true
             extra_args: ""
           - triple: aarch64-apple-darwin
             os: macos-26
             container: ""
             libcxx: true
             warning: true
-            ccache: true
             extra_args: ""
           - triple: x86_64-apple-darwin
             os: macos-26
             container: ""
             libcxx: true
             warning: true
-            ccache: true
             extra_args: ""
           - triple: x86_64-pc-windows-msvc
             os: windows-2025-vs2026
             container: ""
             libcxx: false
             warning: false
-            ccache: false
             extra_args: ""
           # WebAssembly build for the alcy compiler playground. Uses
           # Emscripten (see Setup Emscripten step); extra_args override the
@@ -97,7 +91,6 @@ jobs:
             cxx: em++
             libcxx: false
             warning: true
-            ccache: false
             extra_args: "-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DLLVM_TARGETS_TO_BUILD=WebAssembly -DLLVM_ENABLE_THREADS=OFF -DLLVM_ENABLE_BACKTRACES=OFF -DLLVM_ENABLE_CRASH_OVERRIDES=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DLLVM_ENABLE_PIC=OFF -DLLVM_ENABLE_TERMINFO=OFF -DLLVM_USE_SPLIT_DWARF=OFF -DLLVM_ABI_BREAKING_CHECKS=FORCE_OFF -DLLVM_USE_HOST_TOOLS=ON -DLLVM_EXTERNALIZE_DEBUGINFO=OFF"
           - triple: wasm32-unknown-emscripten
             build_type: release
@@ -107,7 +100,6 @@ jobs:
             cxx: em++
             libcxx: false
             warning: true
-            ccache: false
             extra_args: "-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DLLVM_TARGETS_TO_BUILD=WebAssembly -DLLVM_ENABLE_THREADS=OFF -DLLVM_ENABLE_BACKTRACES=OFF -DLLVM_ENABLE_CRASH_OVERRIDES=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DLLVM_ENABLE_PIC=OFF -DLLVM_ENABLE_TERMINFO=OFF -DLLVM_USE_SPLIT_DWARF=OFF -DLLVM_ABI_BREAKING_CHECKS=FORCE_OFF -DLLVM_USE_HOST_TOOLS=ON -DLLVM_EXTERNALIZE_DEBUGINFO=OFF"
     defaults:
       run:
@@ -129,7 +121,6 @@ jobs:
             clang \
             lld \
             build-base \
-            ccache \
             zstd \
             tar \
             git \
@@ -150,13 +141,6 @@ jobs:
         if: matrix.triple == 'wasm32-unknown-emscripten'
         uses: mymindstorm/setup-emsdk@4528d102f7230f0e7b276855c01ea1159be0e984
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@4d0316e3a1f3f3c1a7a424368dc64f860c345402
-        with:
-          key: ${{ runner.os }}-${{ matrix.build_type }}-${{ matrix.triple }}-${{ matrix.cc }}-llvm-ccache
-          max-size: 4G
-          job-summary: ""
-
       - name: Setup mold
         if: runner.os == 'Linux' && matrix.triple != 'x86_64-unknown-linux-musl' && matrix.triple != 'wasm32-unknown-emscripten'
         uses: rui314/setup-mold@9c9c13bf4c3f1adef0cc596abc155580bcb04444
@@ -166,7 +150,11 @@ jobs:
           make-default: true
 
       - name: Cache CMake build directory
-        if: runner.os != 'macOS' || matrix.build_type != 'debug'
+        # Cache scope is per ref: tag refs (one per release) can never be
+        # shared with other tags or branches, so saving there only wastes the
+        # 10 GB repository quota. Debug build directories are also large
+        # (~0.4-1.2 GiB each), so only release jobs on branches are cached.
+        if: github.ref_type != 'tag' && matrix.build_type != 'debug'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ env.build_dir }}
@@ -199,6 +187,10 @@ jobs:
             assertions="OFF"
           fi
 
+          # ccache is intentionally disabled (use_ccache=false below). The
+          # build directory cache above subsumes it for incremental builds,
+          # and keeping both exhausted the repository cache quota.
+          #
           # NOTE: ${{ matrix.extra_args }} must stay UNQUOTED below so that
           # multi-flag values undergo word splitting. Quoted, the flags
           # arrive as a single shell word and cmake receives one broken -D
@@ -213,17 +205,15 @@ jobs:
             "${{ matrix.libcxx }}" \
             "${{ matrix.warning }}" \
             Ninja \
-            "${{ matrix.ccache }}" \
+            "false" \
             "${{ matrix.cc }}" \
             "${{ matrix.cxx }}" \
             ${{ matrix.extra_args }}
 
       - name: Build and Install
         run: |
-          ccache -z
           # cmake --build $build_dir --target install --parallel 2
           ninja -C $build_dir install
-          ccache -s -v
 
       - name: Archive Binaries
         run: |
