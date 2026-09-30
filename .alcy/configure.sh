@@ -37,6 +37,22 @@ if [ "$#" -gt 0 ]; then
     cmake_args+=("$@")
 fi
 
+# lld is the only project that is consumed as a library, but it is only
+# configured from llvm/tools/CMakeLists.txt, so LLVM_INCLUDE_TOOLS has to be on
+# (with it off, LLVM_ENABLE_PROJECTS is silently ignored). That configures every
+# tool directory, and LLVM_BUILD_TOOLS=OFF only excludes the tool executables:
+# their support libraries are regular LLVM libraries, so they are built and
+# installed anyway. That is wasted work for every target, and llvm-exegesis
+# does not even build on musl (<asm/prctl.h> is glibc only).
+# Disable the tool directories one by one instead of patching LLVM's CMake files.
+for tool_path in "$source_dir"/tools/*/; do
+    [ -f "${tool_path}CMakeLists.txt" ] || continue
+    tool_name=$(basename "$tool_path")
+    # canonicalize_tool_name() in AddLLVM.cmake: '-' becomes '_', then upper case.
+    tool_option=$(echo "$tool_name" | tr '[:lower:]-' '[:upper:]_')
+    cmake_args+=("-DLLVM_TOOL_${tool_option}_BUILD=OFF")
+done
+
 debug_flags="-O1 -gline-tables-only"
 reldbg_flags="-O2 -gline-tables-only"
 release_flags="-O3 -g0"
