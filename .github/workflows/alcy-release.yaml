@@ -44,36 +44,42 @@ jobs:
             container: ""
             libcxx: true
             warning: true
+            ccache: true
             extra_args: ""
           - triple: x86_64-unknown-linux-musl
             os: ubuntu-26.04
             container: alpine:latest
             libcxx: false
             warning: true
+            ccache: true
             extra_args: ""
           - triple: riscv64-unknown-linux-gnu
             os: ubuntu-26.04
             container: ""
             libcxx: true
             warning: true
+            ccache: true
             extra_args: ""
           - triple: aarch64-apple-darwin
             os: macos-26
             container: ""
             libcxx: true
             warning: true
+            ccache: true
             extra_args: ""
           - triple: x86_64-apple-darwin
             os: macos-26
             container: ""
             libcxx: true
             warning: true
+            ccache: true
             extra_args: ""
           - triple: x86_64-pc-windows-msvc
             os: windows-2025-vs2026
             container: ""
             libcxx: false
             warning: false
+            ccache: false
             extra_args: ""
           # WebAssembly build for the alcy compiler playground. Uses
           # Emscripten (see Setup Emscripten step); extra_args override the
@@ -91,6 +97,7 @@ jobs:
             cxx: em++
             libcxx: false
             warning: true
+            ccache: false
             extra_args: "-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DLLVM_TARGETS_TO_BUILD=WebAssembly -DLLVM_ENABLE_THREADS=OFF -DLLVM_ENABLE_BACKTRACES=OFF -DLLVM_ENABLE_CRASH_OVERRIDES=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DLLVM_ENABLE_PIC=OFF -DLLVM_ENABLE_TERMINFO=OFF -DLLVM_USE_SPLIT_DWARF=OFF -DLLVM_ABI_BREAKING_CHECKS=FORCE_OFF -DLLVM_USE_HOST_TOOLS=ON -DLLVM_EXTERNALIZE_DEBUGINFO=OFF"
           - triple: wasm32-unknown-emscripten
             build_type: release
@@ -100,6 +107,7 @@ jobs:
             cxx: em++
             libcxx: false
             warning: true
+            ccache: false
             extra_args: "-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DLLVM_TARGETS_TO_BUILD=WebAssembly -DLLVM_ENABLE_THREADS=OFF -DLLVM_ENABLE_BACKTRACES=OFF -DLLVM_ENABLE_CRASH_OVERRIDES=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DLLVM_ENABLE_PIC=OFF -DLLVM_ENABLE_TERMINFO=OFF -DLLVM_USE_SPLIT_DWARF=OFF -DLLVM_ABI_BREAKING_CHECKS=FORCE_OFF -DLLVM_USE_HOST_TOOLS=ON -DLLVM_EXTERNALIZE_DEBUGINFO=OFF"
     defaults:
       run:
@@ -121,6 +129,7 @@ jobs:
             clang \
             lld \
             build-base \
+            ccache \
             zstd \
             tar \
             git \
@@ -149,22 +158,22 @@ jobs:
           # mold-version: 2.42.0
           make-default: true
 
-      - name: Cache CMake build directory
-        # Cache scope is per ref: tag refs (one per release) can never be
-        # shared with other tags or branches, so saving there only wastes the
-        # 10 GB repository quota. Debug build directories are also large
-        # (~0.4-1.2 GiB each), so only release jobs on branches are cached.
-        # The wasm build is excluded too: emsdk is installed into a per-run
-        # $RUNNER_TEMP directory, so the toolchain path that CMake stores in
-        # the restored tree is gone in the next run and the configure step dies
-        # with "include could not find requested file" before anything is built.
-        if: github.ref_type != 'tag' && matrix.build_type != 'debug' && matrix.triple != 'wasm32-unknown-emscripten'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - name: Setup ccache
+        # ccache is content addressed, so it is safe to reuse across commits,
+        # unlike a build directory cache: restoring one only helps when every
+        # object was rebuilt, because the restored files keep their old mtimes
+        # and are therefore older than the freshly checked out sources.
+        # Tag refs are skipped: each tag is its own cache scope and can never
+        # share an entry, so it would only burn the 10 GB repository quota.
+        if: matrix.ccache && github.ref_type != 'tag'
+        uses: hendrikmuhs/ccache-action@4d0316e3a1f3f3c1a7a424368dc64f860c345402
         with:
-          path: ${{ env.build_dir }}
-          key: cmake-${{ runner.os }}-${{ matrix.build_type }}-${{ matrix.triple }}-${{ github.sha }}
-          restore-keys: |
-            cmake-${{ runner.os }}-${{ matrix.build_type }}-${{ matrix.triple }}-
+          key: ${{ runner.os }}-${{ matrix.build_type }}-${{ matrix.triple }}-${{ matrix.cc }}-llvm-ccache
+          max-size: 1G
+          # Keep a single entry per job. The default appends a timestamp, which
+          # saves a new ~1 GiB snapshot on every run and evicts the older ones.
+          append-timestamp: false
+          job-summary: ""
 
       - name: Verify WASM prerequisites
         if: matrix.triple == 'wasm32-unknown-emscripten'
@@ -191,10 +200,6 @@ jobs:
             assertions="OFF"
           fi
 
-          # ccache is intentionally disabled (use_ccache=false below). The
-          # build directory cache above subsumes it for incremental builds,
-          # and keeping both exhausted the repository cache quota.
-          #
           # NOTE: ${{ matrix.extra_args }} must stay UNQUOTED below so that
           # multi-flag values undergo word splitting. Quoted, the flags
           # arrive as a single shell word and cmake receives one broken -D
@@ -209,15 +214,19 @@ jobs:
             "${{ matrix.libcxx }}" \
             "${{ matrix.warning }}" \
             Ninja \
-            "false" \
+            "${{ matrix.ccache }}" \
             "${{ matrix.cc }}" \
             "${{ matrix.cxx }}" \
             ${{ matrix.extra_args }}
 
       - name: Build and Install
         run: |
+          # ccache is only installed by the step above, which is skipped for
+          # tag refs and for the jobs that do not use it.
+          if command -v ccache > /dev/null; then ccache -z; fi
           # cmake --build $build_dir --target install --parallel 2
           ninja -C $build_dir install
+          if command -v ccache > /dev/null; then ccache -s -v; fi
 
       - name: Archive Binaries
         run: |
