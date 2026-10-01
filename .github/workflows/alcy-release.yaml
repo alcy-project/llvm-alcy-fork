@@ -154,7 +154,11 @@ jobs:
         # shared with other tags or branches, so saving there only wastes the
         # 10 GB repository quota. Debug build directories are also large
         # (~0.4-1.2 GiB each), so only release jobs on branches are cached.
-        if: github.ref_type != 'tag' && matrix.build_type != 'debug'
+        # The wasm build is excluded too: emsdk is installed into a per-run
+        # $RUNNER_TEMP directory, so the toolchain path that CMake stores in
+        # the restored tree is gone in the next run and the configure step dies
+        # with "include could not find requested file" before anything is built.
+        if: github.ref_type != 'tag' && matrix.build_type != 'debug' && matrix.triple != 'wasm32-unknown-emscripten'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ env.build_dir }}
