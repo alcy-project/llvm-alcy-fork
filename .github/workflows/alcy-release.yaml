@@ -214,7 +214,7 @@ jobs:
             "${{ matrix.libcxx }}" \
             "${{ matrix.warning }}" \
             Ninja \
-            "${{ matrix.ccache }}" \
+            "${{ matrix.ccache && github.ref_type != 'tag' }}" \
             "${{ matrix.cc }}" \
             "${{ matrix.cxx }}" \
             ${{ matrix.extra_args }}
