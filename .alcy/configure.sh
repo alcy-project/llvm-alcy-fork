@@ -69,6 +69,21 @@ else
     msvc_runtime="MultiThreaded"
 fi
 
+# When the build runs against a downloaded LLVM's libc++ (LIBCXX_INCLUDE_DIR
+# and friends), point the compiler's C++ flag handling at those paths, so the
+# build needs no system libc++ packages.
+if [ -n "${LIBCXX_INCLUDE_DIR:-}" ]; then
+    cpp_flags="-nostdinc++ -isystem $LIBCXX_INCLUDE_DIR"
+    if [ -n "${LIBCXX_TARGET_INCLUDE_DIR:-}" ]; then
+        cpp_flags="$cpp_flags -isystem $LIBCXX_TARGET_INCLUDE_DIR"
+    fi
+    cmake_args+=("-DCMAKE_CXX_FLAGS=$cpp_flags")
+fi
+if [ -n "${LIBCXX_LIB_DIR:-}" ]; then
+    cmake_args+=("-DCMAKE_EXE_LINKER_FLAGS=-L$LIBCXX_LIB_DIR -Wl,-rpath,$LIBCXX_LIB_DIR")
+    cmake_args+=("-DCMAKE_SHARED_LINKER_FLAGS=-L$LIBCXX_LIB_DIR -Wl,-rpath,$LIBCXX_LIB_DIR")
+fi
+
 echo "extra cmake args: ${cmake_args[@]}"
 
 # Run `cmake -N -L -S llvm -B ./.alcy/build` or open `llvm/docs/CMake.rst` to see all build flags

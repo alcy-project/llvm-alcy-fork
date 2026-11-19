@@ -133,6 +133,36 @@ jobs:
       - name: Checkout LLVM
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
+      # Every platform that has a published LLVM 23.1.6 binary builds with
+      # it instead of the runner's image Clang. The exclusions: no Intel
+      # macOS archive exists (the macos-26-intel image's own Clang is
+      # used), the musl runner cannot run glibc binaries (apk's own
+      # musl-native toolchain is used), and wasm32 builds through
+      # Emscripten's emcc/em++.
+      - name: Setup LLVM tools
+        if: >-
+          matrix.triple != 'wasm32-unknown-emscripten'
+          && matrix.triple != 'x86_64-unknown-linux-musl'
+          && matrix.triple != 'x86_64-apple-darwin'
+        uses: pug523/install-llvm-action@c5bea673cb9ebfa4d7b7ee1c3d2fa3cbe4320bc0
+        with:
+          version: "23.1.6"
+
+      # Point the build at the downloaded LLVM's libc++ instead of a
+      # system one. Only entries that build against libc++ (all Linux
+      # entries except musl, which has its own apk toolchain, and
+      # riscv64, which builds with the GCC cross sysroot).
+      - name: Setup LIBCXX (Linux)
+        if: runner.os == 'Linux' && matrix.libcxx == 'true'
+        shell: bash
+        run: |
+          echo "LIBCXX_INCLUDE_DIR=$LLVM_PATH/include/c++/v1" >> "$GITHUB_ENV"
+          target_inc=$(compgen -G "$LLVM_PATH"/include/*linux*/c++/v1 || true)
+          if [[ -d "$target_inc" ]]; then
+            echo "LIBCXX_TARGET_INCLUDE_DIR=$target_inc" >> "$GITHUB_ENV"
+          fi
+          echo "LIBCXX_LIB_DIR=$LLVM_PATH/lib" >> "$GITHUB_ENV"
+
       - name: Install dependencies (Alpine / Musl)
         if: matrix.triple == 'x86_64-unknown-linux-musl'
         shell: sh
@@ -157,12 +187,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends gcc-riscv64-linux-gnu g++-riscv64-linux-gnu
-
-      - name: Install dependencies (Ubuntu)
-        if: runner.os == 'Linux' && matrix.triple != 'x86_64-unknown-linux-musl'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libc++-dev libc++abi-dev clang
 
       - name: Install Ninja
         if: matrix.triple != 'x86_64-unknown-linux-musl'
