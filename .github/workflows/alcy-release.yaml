@@ -151,17 +151,26 @@ jobs:
       # Point the build at the downloaded LLVM's libc++ instead of a
       # system one. Only entries that build against libc++ (all Linux
       # entries except musl, which has its own apk toolchain, and
-      # riscv64, which builds with the GCC cross sysroot).
+      # riscv64, which builds with the GCC cross sysroot). The
+      # downloaded LLVM lays its libc++ under an architecture-specific
+      # subdirectory, so the glob matches that instead of the
+      # top-level lib/.
       - name: Setup LIBCXX (Linux)
         if: runner.os == 'Linux' && matrix.libcxx == 'true'
         shell: bash
         run: |
           echo "LIBCXX_INCLUDE_DIR=$LLVM_PATH/include/c++/v1" >> "$GITHUB_ENV"
-          target_inc=$(compgen -G "$LLVM_PATH"/include/*linux*/c++/v1 || true)
+          target_inc=$(compgen -G "$LLVM_PATH"/include/*linux*/c++/v1 | head -n 1 || true)
           if [[ -d "$target_inc" ]]; then
             echo "LIBCXX_TARGET_INCLUDE_DIR=$target_inc" >> "$GITHUB_ENV"
           fi
-          echo "LIBCXX_LIB_DIR=$LLVM_PATH/lib" >> "$GITHUB_ENV"
+          target_lib=$(compgen -G "$LLVM_PATH"/lib/*linux* | head -n 1 || true)
+          if [[ -d "$target_lib" ]]; then
+            echo "LIBCXX_LIB_DIR=$target_lib" >> "$GITHUB_ENV"
+            echo "LD_LIBRARY_PATH=$target_lib:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
+          else
+            echo "LIBCXX_LIB_DIR=$LLVM_PATH/lib" >> "$GITHUB_ENV"
+          fi
 
       - name: Install dependencies (Alpine / Musl)
         if: matrix.triple == 'x86_64-unknown-linux-musl'
