@@ -144,7 +144,7 @@ jobs:
           matrix.triple != 'wasm32-unknown-emscripten'
           && matrix.triple != 'x86_64-unknown-linux-musl'
           && matrix.triple != 'x86_64-apple-darwin'
-        uses: pug523/install-llvm-action@c5bea673cb9ebfa4d7b7ee1c3d2fa3cbe4320bc0
+        uses: pug523/install-llvm-action@50bd5e5c6d08c532b5bec0d6470e072fb38b2014
         with:
           version: "23.1.5"
 
