@@ -71,8 +71,9 @@ fi
 
 # When the build runs against a downloaded LLVM's libc++ (LIBCXX_INCLUDE_DIR
 # and friends), point the compiler's C++ flag handling at those paths, so the
-# build needs no system libc++ packages. The archive does not ship a shared
-# libc++, so the binaries link it statically.
+# build needs no system libc++ packages. The shared libc++ lives in the
+# archive's architecture-specific lib directory, and the rpath keeps the
+# tablegen tools runnable without an LD_LIBRARY_PATH.
 if [ -n "${LIBCXX_INCLUDE_DIR:-}" ]; then
     cpp_flags="-nostdinc++ -isystem $LIBCXX_INCLUDE_DIR"
     if [ -n "${LIBCXX_TARGET_INCLUDE_DIR:-}" ]; then
@@ -81,8 +82,8 @@ if [ -n "${LIBCXX_INCLUDE_DIR:-}" ]; then
     cmake_args+=("-DCMAKE_CXX_FLAGS=$cpp_flags")
 fi
 if [ -n "${LIBCXX_LIB_DIR:-}" ]; then
-    cmake_args+=("-DCMAKE_EXE_LINKER_FLAGS=-L$LIBCXX_LIB_DIR -static-libc++")
-    cmake_args+=("-DCMAKE_SHARED_LINKER_FLAGS=-L$LIBCXX_LIB_DIR -static-libc++")
+    cmake_args+=("-DCMAKE_EXE_LINKER_FLAGS=-L$LIBCXX_LIB_DIR -Wl,-rpath,$LIBCXX_LIB_DIR")
+    cmake_args+=("-DCMAKE_SHARED_LINKER_FLAGS=-L$LIBCXX_LIB_DIR -Wl,-rpath,$LIBCXX_LIB_DIR")
 fi
 
 echo "extra cmake args: ${cmake_args[@]}"
