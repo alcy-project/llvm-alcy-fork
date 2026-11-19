@@ -133,7 +133,7 @@ jobs:
       - name: Checkout LLVM
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      # Every platform that has a published LLVM 23.1.6 binary builds with
+      # Every platform that has a published LLVM 23.1.5 binary builds with
       # it instead of the runner's image Clang. The exclusions: no Intel
       # macOS archive exists (the macos-26-intel image's own Clang is
       # used), the musl runner cannot run glibc binaries (apk's own
@@ -146,7 +146,7 @@ jobs:
           && matrix.triple != 'x86_64-apple-darwin'
         uses: pug523/install-llvm-action@c5bea673cb9ebfa4d7b7ee1c3d2fa3cbe4320bc0
         with:
-          version: "23.1.6"
+          version: "23.1.5"
 
       # Point the build at the downloaded LLVM's libc++ instead of a
       # system one. Only entries that build against libc++ (all Linux
