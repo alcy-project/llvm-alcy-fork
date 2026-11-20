@@ -147,6 +147,11 @@ jobs:
         uses: pug523/install-llvm-action@50bd5e5c6d08c532b5bec0d6470e072fb38b2014
         with:
           version: "23.1.5"
+          # The image ships an installed LLVM under C:\Program Files\LLVM,
+          # and an administrative extract pointed there hangs the Windows
+          # Installer for hours. A runner-temp directory holds no product,
+          # so msiexec /a finishes in seconds.
+          directory: ${{ runner.temp }}/llvm
 
       # Point the build at the downloaded LLVM's libc++ instead of a
       # system one. Only entries that build against libc++ (all Linux
